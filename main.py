@@ -13,23 +13,102 @@ from selenium.webdriver.support import expected_conditions as EC
 # Effort is put towards decreasing the number of evals put still putting that number to use.
 # Its a balancing act of how often an eval should be done. If evals were as fast as a click then this would be a non-issue.
 
-clicks_threshold = 100 # Higher is longer time between shopping
-cookies_per_cps = 1000.0 # Less is better
-clicks = 0
-number_of_purchases_per_eval = 4
-number_of_purchases_per_eval_counter = 0
-classic = True
+def main():
+    if(input("[1]Classic or [2]New version?\n") == "1"):
+        classic = True
+    else:
+        classic = False
 
-ser = Service("C:\Program Files (x86)\chromedriver.exe")
-options = webdriver.ChromeOptions()
-options.add_argument("--incognito")
-driver = webdriver.Chrome(service=ser,options=options)
+    try:
+        inputText = input("How many clicks until building purchase?\n") # Higher is longer time between shopping
+        if(not inputText.isdigit()):
+            raise
+        clicks_threshold = int(inputText)
+    except:
+        print("Not valid")
+        clicks_threshold = 500    
 
-#driver.maximize_window()
+    cookies_per_cps = 1000.0 # Less is better
+    clicks = 0
+    number_of_purchases_per_eval = 4
+    number_of_purchases_per_eval_counter = 0
 
-# Using the in-game timer was needlessly complicated
-#elapsed_Time_Text_List = driver.find_element(By.XPATH, '//*[@id="ascendTooltip"]/b').get_attribute('innerText').split()
-#elapsed_Time = int(elapsed_Time_Text_List[elapsed_Time_Text_List.index('seconds')-1])
+    ser = Service("C:\Program Files (x86)\chromedriver.exe")
+    options = webdriver.ChromeOptions()
+    options.add_argument("--incognito")
+    driver = webdriver.Chrome(service=ser,options=options)
+    #driver.maximize_window()
+    
+    if(classic): # Open and play classic cookie clicker
+        which_product_to_click = ["Cursor",cookies_per_cps]
+        driver.get("https://orteil.dashnet.org/experiments/cookie/")
+        time.sleep(3)
+        while(True):
+            driver.find_element(By.XPATH, '//*[@id="cookie"]').click()
+            clicks += 1
+            if(clicks >= clicks_threshold):
+                clicks = 0
+                which_product_to_click[1] = cookies_per_cps
+                storeBuildings = driver.find_element(By.XPATH, '//*[@id="store"]').find_elements(By.TAG_NAME, 'DIV')
+                for building in storeBuildings:
+                    outerTextOfBuildingList = building.get_attribute("outerText").split("\n",1)[0]
+                    nameBuilding = outerTextOfBuildingList.split()[0]
+                    costBuildingText = (outerTextOfBuildingList.split()[-1]).replace(",", "")
+                    if((not costBuildingText.isdigit()) or (nameBuilding.isdigit())):
+                        costBuildingText = "0.0"
+                    costBuilding = float(costBuildingText)
+
+                    if((costBuilding < which_product_to_click[1]) and (costBuilding != 0.0)):
+                        which_product_to_click[1] = costBuilding
+                        which_product_to_click[0] = nameBuilding
+                        
+                print("I am going to buy:",which_product_to_click[0])
+                try:
+                    driver.find_element(By.XPATH, '//*[@id="buy'+which_product_to_click[0]+'"]').click()
+                except:
+                    pass
+
+        driver.quit()
+    else: # Open and play new cookie clicker
+        which_product_to_click = ["product0",cookies_per_cps]
+        driver.get("https://orteil.dashnet.org/cookieclicker/")
+        time.sleep(3)
+        driver.find_element(By.XPATH, '//*[@id="statsButton"]').click()
+        while(True):
+            driver.find_element(By.XPATH, '//*[@id="bigCookie"]').click()
+            clicks += 1
+
+            if(clicks >= clicks_threshold):
+                print("##### START OF A NEW CLICK RESET! ####")
+
+                ##### Purchase building dependant on its cookies to cps ratio ######       
+                if(number_of_purchases_per_eval_counter >= number_of_purchases_per_eval):
+                    number_of_purchases_per_eval_counter = 0
+                    which_product_to_click[1] = cookies_per_cps
+                    for x in range(0, 5):
+                        eval_value = evaluate_building(str(x))
+                        print("The eval value:",eval_value)
+                        print("The value in list",which_product_to_click[1])
+                        if((eval_value < which_product_to_click[1]) and (eval_value != 0.0)):
+                            which_product_to_click[1] = eval_value
+                            which_product_to_click[0] = "product"+str(x)
+                
+                try:
+                    driver.find_element(By.XPATH, '//*[@id="'+which_product_to_click[0]+'"]').click() # The surviving product upgrade will be clicked
+                except:
+                    pass 
+                
+                ###### The store upgrades ######
+
+                try:
+                    #driver.find_element(By.XPATH, '//*[@id="upgrades"]'))#.find_elements(By.CLASS_NAME, "crate upgrade enabled")
+                    element = driver.find_element(By.XPATH, '//*[@id="upgrade0"]')
+                    webdriver.ActionChains(driver).move_to_element(element).click().perform()
+                except:
+                    pass
+                number_of_purchases_per_eval_counter += 1
+                clicks = 0
+        driver.quit()
 
 def evaluate_building(prod_numb):
     try:
@@ -52,67 +131,6 @@ def evaluate_building2(prod_numb):
         return 0.0
     return current_Cursor_Price
 
-if(classic): # Open and play classic cookie clicker
-    which_product_to_click = ["Cursor",cookies_per_cps]
-    driver.get("https://orteil.dashnet.org/experiments/cookie/")
-    time.sleep(3)
-    while(True):
-        driver.find_element(By.XPATH, '//*[@id="cookie"]').click()
-        clicks += 1
-        if(clicks >= clicks_threshold):
-            clicks = 0
-            storeBuildings = driver.find_element(By.XPATH, '//*[@id="store"]').find_elements(By.TAG_NAME, 'DIV')
-            for building in storeBuildings:
-                textContentOfBuildingList = building.find_element(By.XPATH, '//*/b').get_attribute("textContent").split()
-                #costBuilding = float(textContentOfBuildingList[-1])
-                print("Building cost:",textContentOfBuildingList)
-                # if(costBuilding < which_product_to_click[1]):
-                #     which_product_to_click[1] = costBuilding
-                #     which_product_to_click[0] = textContentOfBuildingList[0]
-            #print("I am going to buy:",which_product_to_click[0])
-            #driver.find_element(By.XPATH, '//*[@id="buy'+which_product_to_click[0]+'"]').click()
-            
 
-
-
-    driver.quit()
-else: # Open and play new cookie clicker
-    which_product_to_click = ["product0",cookies_per_cps]
-    driver.get("https://orteil.dashnet.org/cookieclicker/")
-    time.sleep(3)
-    driver.find_element(By.XPATH, '//*[@id="statsButton"]').click()
-    while(True):
-        driver.find_element(By.XPATH, '//*[@id="bigCookie"]').click()
-        clicks += 1
-
-        if(clicks >= clicks_threshold):
-            print("##### START OF A NEW CLICK RESET! ####")
-
-            ##### Purchase building dependant on its cookies to cps ratio ######       
-            if(number_of_purchases_per_eval_counter >= number_of_purchases_per_eval):
-                number_of_purchases_per_eval_counter = 0
-                which_product_to_click[1] = cookies_per_cps
-                for x in range(0, 5):
-                    eval_value = evaluate_building(str(x))
-                    print("The eval value:",eval_value)
-                    print("The value in list",which_product_to_click[1])
-                    if((eval_value < which_product_to_click[1]) and (eval_value != 0.0)):
-                        which_product_to_click[1] = eval_value
-                        which_product_to_click[0] = "product"+str(x)
-            
-            try:
-                driver.find_element(By.XPATH, '//*[@id="'+which_product_to_click[0]+'"]').click() # The surviving product upgrade will be clicked
-            except:
-                pass 
-            
-            ###### The store upgrades ######
-
-            try:
-                #driver.find_element(By.XPATH, '//*[@id="upgrades"]'))#.find_elements(By.CLASS_NAME, "crate upgrade enabled")
-                element = driver.find_element(By.XPATH, '//*[@id="upgrade0"]')
-                webdriver.ActionChains(driver).move_to_element(element).click().perform()
-            except:
-                pass
-            number_of_purchases_per_eval_counter += 1
-            clicks = 0
-    driver.quit()
+if __name__ == '__main__':
+    main()
