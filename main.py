@@ -84,7 +84,7 @@ def main():
                 try:
                     driver.find_element(By.XPATH, '//*[@id="buy'+which_product_to_click[0]+'"]').click()
                 except:
-                    pass
+                    print("Error: Tried to buy building but could not click element")
 
         driver.quit()
     else: # Open and play new cookie clicker
@@ -114,7 +114,7 @@ def main():
                 try:
                     driver.find_element(By.XPATH, '//*[@id="'+which_product_to_click[0]+'"]').click() # The surviving product upgrade will be clicked
                 except:
-                    pass 
+                    print("Error: Tried to purchase building but could not click element")
                 
                 ###### The store upgrades ######
 
@@ -123,7 +123,7 @@ def main():
                     element = driver.find_element(By.XPATH, '//*[@id="upgrade0"]')
                     webdriver.ActionChains(driver).move_to_element(element).click().perform()
                 except:
-                    pass
+                    print("Error: Tried to purchase store upgrade but could not click element")
                 number_of_purchases_per_eval_counter += 1
                 clicks = 0
         driver.quit()
@@ -139,7 +139,7 @@ def evaluate_building(prod_numb,driver):
         current_Cursor_Price = float(driver.find_element(By.XPATH, '//*[@id="productPrice'+prod_numb+'"]').get_attribute("outerText").replace(",", "")) # gets the current price
         return (current_Cursor_Price / current_Cursor_increase_in_cps)
     except:
-        pass
+        print("Error: Evaluation of the building failed")
     return 0.0
 
 def evaluate_building2(prod_numb,driver):
