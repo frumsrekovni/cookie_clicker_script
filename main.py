@@ -6,6 +6,8 @@ from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 
+from webdriver_manager.chrome import ChromeDriverManager
+
 # I was looking at some scripts for cookie clicker and got sort of dissappointed in the logic for choosing upgrades. Most of them was random or just hardcoded in values. 
 # So, I want to make one that uses a smidge of reasonable logic. It will be valuing and choosing what to upgrade dependant on how many cookies it costs per increase in cookies per second.
 # Doing the actual evaluation proved itself to be very time consuming in the context of how fast it can click. 
@@ -49,7 +51,7 @@ def main():
     clicks = 0
     number_of_purchases_per_eval_counter = 0
 
-    ser = Service("C:\Program Files (x86)\chromedriver.exe")
+    ser = Service(ChromeDriverManager().install())
     options = webdriver.ChromeOptions()
     options.add_argument("--incognito")
     driver = webdriver.Chrome(service=ser,options=options)
